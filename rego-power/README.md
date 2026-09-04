@@ -107,6 +107,56 @@ seal arrives within a few pieces — early reward matters more than early challe
 It can be run any number of times — **HOW TO PLAY → ▶ TRY IT** — so a second child can be handed
 the phone and get the same walkthrough.
 
+## Golden hour
+
+Every day, one hour of the evening peak is marked with a crown before you start.
+Fill it entirely with renewables and the certificate is worth six normal ones,
+with a cascade to match.
+
+This is the real thing, not a game invention. A certificate for a megawatt hour
+generated at 6pm is worth many times one generated at midday, because midday is
+when clean power is abundant and 6pm is when it is not. Same scheme, same
+megawatt hour — the only difference is the hour stamped on it.
+
+## Clean runs
+
+Certify hours back to back and the sound climbs a scale, the seals brighten and
+the board shakes harder. Nothing breaks a run except the gas button. Which is the
+point.
+
+## The REGO vault
+
+Every certificate you have ever earned, kept and stamped with the hour it was made
+in. The vault draws them as a chart by hour of the day, with the evening peak
+picked out in gold, and tells you how many of yours came from that peak.
+
+It is worth looking at after a week. The shape of that chart is the argument the
+game is making.
+
+## Milestones
+
+Fixed thresholds on your lifetime certificate count — 15, 40, 90, 175, 300 — that
+unlock a harbour behind the skyline, stronger offshore wind, an aurora, a second
+golden hour each morning, and a bigger city. Every rung is visible from the start
+on the front card and in the vault, so you always know what is next and exactly
+how far away it is.
+
+Nothing in this game is a random reward. There is no spin, no crate, no roll. If
+you got something, you earned it, and you could see it coming.
+
+## Perfect day
+
+24 out of 24 does not just show you a summary. The board lights hour by hour up a
+rising scale, then everything goes white. Getting there is genuinely hard.
+
+## Sound
+
+Turn it on. Half the reward is audio: the pitch of a certificate rises with your
+clean run, the gas button sounds like something going wrong, and a perfect day
+gets a proper chord.
+
+The 🔊 button in the header mutes everything instantly.
+
 ## Difficulty
 **EASY** and **PLAY** (normal). Easy halves the drop speed, flattens demand peaks, gives five gas
 uses instead of three and a bigger battery. Hand that one to a seven-year-old.
@@ -196,14 +246,21 @@ struggles on an old device, set `bloomOK=false`.
 ## The logo
 `index.html` looks for the PATtech mark in this order and uses the first that loads:
 1. **`PATtechLogoWhite.svg` in this folder** — do this; the only option that works offline
-2. `cdn.prod.website-files.com/.../675b084bbf3922505727f01a_Logo.svg` — from pattech.com
-3. `.../675b084bbf3922505727efe8_Logo.svg` — second logo asset on the same site
-4. `hnz.app/pattech/assets/logo/PATtechLogoWhite.svg`
-5. A drawn arrow-and-wordmark, so a broken image never shows
+2. `hnz.app/pattech/assets/logo/PATtechLogoWhite.svg` — the brand-guidelines copy
+3. A drawn arrow-and-wordmark, so a broken image never shows
 
-I could not open the two CDN files to check them, and Webflow rewrites those URLs on republish.
-Load the game once and look at the header before you publish. The list is `BRAND_SRCS` near the top
-of the script.
+Two Webflow CDN URLs used to sit in the middle of that list. Neither could be opened to
+verify, and Webflow rewrites those URLs on republish, so they were two guaranteed-slow
+failures on every load for any machine without a local copy. They have been removed.
+
+Drop the SVG next to `index.html` and the chain never leaves the machine. The list is
+`BRAND_SRCS` near the top of the script.
+
+## Phones, tablets and desktops
+Portrait phones get the layout they always had. Turn a phone sideways, or open the game on
+a laptop, and the controls move into a rail down the right-hand side and the board grows to
+fill the height — about twice the size it used to be in a desktop window. There is a
+keyboard legend in the rail on desktop.
 
 ## Updating a live site
 1. Netlify → your site → **Deploys** → drag the `rego-power` folder onto the drop area. Same URL,

@@ -224,6 +224,183 @@ next visit, and the page reloads itself once when a new worker takes over.
 
 ---
 
+## 11. Rewards layer (added in the September build)
+
+Five features were added because playtesters said the game did not pay them back
+enough for playing well. All five are **deterministic**. None of them roll dice.
+
+That was a deliberate constraint. The obvious way to make a game feel more
+exciting is a variable-ratio random reward — the slot-machine loop. It is also
+the mechanic regulators in NZ and Australia keep circling in games aimed at
+children, and it would sit very badly under a brand whose entire argument is that
+you cannot fake clean energy with favourable averaging. The escalation in Tetris
+(single, double, triple, tetris) is not random either, and it is the thing people
+actually remember. Everything below follows that model: announced in advance,
+earned by skill, repeatable.
+
+**Do not replace any of this with a random payout.** It would take about ten
+minutes and it would be the wrong ten minutes.
+
+### Golden hour — `pickGolden()`, `isGolden()`
+At the start of every day one evening hour (16–20, weighted by that day's demand)
+is flagged, announced by toast and sound, and drawn with a gold column wash and a
+floating crown. Certifying it pays `REWARD.goldenMult` times a normal certificate
+with a full cascade. This is the one mechanic that is *literally* the domain
+argument: a REGO minted at 6pm is worth vastly more than the same certificate
+minted at midday, because that is the hour the grid struggles to cover cleanly.
+The `crown` milestone adds a second golden hour in the morning peak (6–9).
+
+### Clean run — `chain`
+Counts consecutive certified hours. Never reset by a bad piece; reset **only** by
+gas. Each step raises the pitch of the certificate sound through a pentatonic
+scale, brightens the seal and increases screen shake. `REWARD.chainMarks` are the
+lengths that get a fanfare. Breaking a run of 3+ plays a distinct descending
+sound — the point is that the gas button should feel like it costs something.
+
+### REGO vault — `vaultCard()`
+Every certificate is stored as `{d: date, h: hour, g: golden}`, capped at the last
+400 (`vaultHours[]` keeps the full lifetime tally per hour, uncapped). The card
+shows a 24-bar histogram of certificates by hour with the evening peak in gold,
+and states how many of the player's lifetime certificates came from that peak.
+This is the most quietly useful screen in the game: it is a personal version of
+the same chart the Scope 3 analysis makes.
+
+`vaultHours` is sparse until every hour has been certified at least once. Densify
+before taking a maximum — `Math.max` over an array hole returns `NaN`, which
+silently collapsed every bar to its minimum height during development.
+
+### Milestones — `UNLOCKS`, `checkUnlocks()`, `unlockLadder()`
+Fixed lifetime-certificate thresholds, every rung visible from the start on the
+intro card and in the vault. `unlockSeen[]` persists which have been announced;
+`newUnlocks[]` is the transient list for the current summary card and is cleared
+in `newDay()`, **not** at the end of `endDay()` — on a perfect day the summary
+card is built asynchronously after the finale, so clearing it early loses the
+unlock rows.
+
+Effects are wired at: `buildSky()` (harbour cranes, taller skyline, lit windows),
+`seedWeather()` (offshore wind base), `aurora()` (alpha), `pickGolden()` (second
+golden hour).
+
+### Perfect day — `runFinale()`
+24/24 no longer goes straight to a summary card. Each hour lights in turn on a
+72ms timer with a rising pentatonic note, then a white flash, a seven-note chord
+and a 1.5s hold before the card appears. `finale` is read by `draw()`; the render
+loop keeps running because `running=false` only stops physics, not drawing.
+
+## 12. Audio
+
+The old engine was a single `beep()` — one oscillator, one exponential ramp. It
+has been replaced with a small synth in the same place:
+
+- `audio()` builds the context lazily, plus a `MASTER` gain and a `VERB`
+  convolver whose impulse response is generated from decaying noise. Nothing is
+  loaded from the network.
+- `tone({f,to,dur,type,v,atk,lp,detune,verb,at})` — one voice with a real
+  attack/decay envelope, optional pitch glide and optional lowpass.
+- `noise({f,to,dur,v,q,type,verb})` — filtered noise for percussive hits.
+- `seq()` / `chord()` schedule on the **audio clock**, not `setTimeout`, so
+  fanfares stay in time when the frame rate drops.
+- `S` is the named sound table. `S.rego(n)` takes the chain length and picks its
+  root from `PENT`.
+
+`unlockAudio()` is bound to the first `pointerdown`/`keydown`/`touchstart`. iOS
+and Chrome both start the context suspended, and without this the first few
+sounds of a session are silently dropped.
+
+Muting is one gain node, so the 🔊 button is instant and cannot leave a voice
+ringing.
+
+## 13. Reward tuning
+
+All of it is in the `REWARD` block next to `REGO_GOLD`:
+
+```js
+const REWARD={ rego:40, goldenMult:6, chainStep:.15, chainCap:10,
+               chainMarks:[3,6,10,16] };
+```
+
+**Scores are now much larger than in the previous build** — a good day roughly
+triples. Any high score saved by the old version will look small next to a new
+one. If that matters more than the headline number, drop `goldenMult` to 3 and
+`chainStep` to .08. `goldenMult` is the number carrying the lesson, so I would
+lower `chainStep` first.
+
+## 14. Layout: phone, landscape and desktop
+
+There is one breakpoint, applied by JS rather than a media query so the render
+code and the CSS can never disagree about which layout is live:
+
+```js
+const wide = window.innerWidth>=720 && window.innerWidth/window.innerHeight>=1.25;
+document.body.classList.toggle('wide', wide);
+```
+
+A portrait phone never matches and is completely untouched by this work. Desktop
+windows and phones held sideways both match and get the same layout: the board in
+the left column, everything that used to stack underneath it moved into a 272px
+rail on the right, plus a keyboard legend that only appears in wide mode. Nothing
+sits below the board and nothing scrolls.
+
+### The board sizes on both axes now
+
+It used to be `cell = floor(width / (COLS+GUT))` and nothing else, so the board's
+height was a function of its width. That is right in a tall phone column and
+wrong everywhere else — a 844x390 landscape viewport produced a 617px page.
+
+`sizeCanvas()` now takes the smaller of the width-derived and height-derived cell
+sizes, and writes an explicit pixel width onto the canvas so it is never
+stretched off its aspect ratio.
+
+Two traps here, both hit during development:
+
+**Do not shrink-wrap `#boardWrap` on both axes.** If the container sizes to the
+canvas while the canvas sizes to the container, the board loses a few pixels on
+every resize and collapses. It stretches horizontally (`justify-self:stretch`,
+`width:100%`) so `clientWidth` is a stable measurement, and wraps vertically.
+
+**Do not measure available height from the board's own `getBoundingClientRect()`
+.top.** The board is vertically centred in wide mode, so its top moves when it
+resizes — same oscillation. Height is measured from the hour bar's bottom edge,
+which does not move.
+
+### Results
+
+| viewport | before | after |
+|---|---|---|
+| 390x844 phone | 192px board, fits | unchanged |
+| 844x390 landscape | 272px board, **617px page in a 390px viewport** | 272px board, fits |
+| 1440x900 desktop | 272px board in a 520px column | 608px board |
+
+Verified stable: six consecutive `relayout()` calls at 1440x900 all settle on
+`cell = 38`, and rotating 390x844 to 844x390 and back twice produces no overflow
+and no drift.
+
+## 15. Bug fixed: drag was broken on every platform
+
+`down()` recorded `col0: piece.col`. Pieces have `.x`; there is no `.col`
+anywhere in the file. So `col0` was `undefined` and every drag called
+`moveTo(NaN)`.
+
+`Math.max(0, Math.min(COLS-w, NaN))` is `NaN`. `NaN !== piece.x` is always true,
+so the walk loop always ran, and `NaN > piece.x` is always false, so the
+direction was always `-1`. **Dragging in either direction walked the piece left
+until it hit the wall or an illegal column.**
+
+Measured before the fix, on a phone viewport: dragging from column 5 to column 18
+moved the piece from x=11 to x=6 — right gesture, left result.
+
+This is the control the README calls "the main control". Tap-to-column was
+unaffected, which is presumably why it survived: `up()` handles taps on a
+separate path.
+
+Two reasons the test bot never caught it, worth knowing before trusting that bot
+again: it drives `move()` and `hardDrop()` directly and never issues a pointer
+gesture, and a piece slammed to the left wall still produces a plausible-looking
+game. `moveTo()` now also returns early on a non-finite target.
+
+**If you add controls, test them with real pointer events**, not by calling the
+movement functions. `/tmp`-style gesture tests are in §8.
+
 ## 10. Licence and credit
 
 Built for PATtech. The line to keep visible is **"REGO Power — by PATtech"**; it appears on the
