@@ -7,8 +7,9 @@ window.REGO_CONFIG = {
 
   // Both values are shown in the Supabase project's API settings
   supabaseUrl: 'https://bufbdjrkfukshfjbfqhi.supabase.co',
-  supabaseKey: '',          // the PUBLISHABLE key (sb_publishable_...) or legacy anon key.
-                            // Never paste a secret / service_role key here.
+  // the PUBLISHABLE key (sb_publishable_...). Never a secret / service_role key:
+  // this file is served to every player's phone.
+  supabaseKey: 'sb_publishable_Qc3FjDqWKPDQ3HVYafxwnQ_6V33pkHC',
 
   // One leaderboard per event code. Lower-case letters, numbers and dashes.
   // A link ending in ?event=another-code uses a separate leaderboard without editing this file.
