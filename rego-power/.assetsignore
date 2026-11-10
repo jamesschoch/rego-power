@@ -1,0 +1,20 @@
+# Files that live in this folder for people, not for browsers. Wrangler reads this
+# like a .gitignore and skips anything matching when it uploads the static assets.
+# It must sit in the root of the assets directory, which is this folder.
+
+# documentation and the one-off database setup
+README.md
+HANDOVER.md
+supabase-setup.sql
+
+# 3.5 MB of screenshots and the capture script
+promo/
+
+# unused local copies — index.html and screen.html load the PATtech logo from
+# PATtechLogoWhite.svg and fall back to the CDN, never to these
+675b084bbf3922505727efe8_Logo.svg
+675b084bbf3922505727f01a_Logo.svg
+
+# a GitHub Pages leftover, and this file itself
+.nojekyll
+.assetsignore
