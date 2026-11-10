@@ -9,6 +9,9 @@ dependencies, no tracking, no accounts.
 ```
 rego-power/
 ├── index.html              the whole game — this is the only file that has to be served
+├── rego-config.js          event settings: Supabase details, event code, prize, privacy link
+├── screen.html             the big-screen leaderboard, with a QR code to the game
+├── supabase-setup.sql      run once in the Supabase SQL Editor to create the leaderboard
 ├── manifest.webmanifest    makes it installable as a phone app
 ├── sw.js                   service worker — offline play (bump VERSION on every deploy)
 ├── icon-*.png              app icons: 192, 512, maskable, apple-touch
@@ -279,6 +282,37 @@ and the URL is yours for good.
 
 Testing an update on your phone: pull down to refresh once. If you installed it to the home screen,
 close it fully and reopen.
+
+## The event leaderboard
+
+Three files turn the game into a stand at an event: players submit a score, optionally leave
+contact details, and see where they sit. Until `rego-config.js` has a Supabase address and
+publishable key the game runs in **demo mode** — every screen works, a yellow badge says so,
+and scores stay on the phone. Nothing is sent and no contact details are kept.
+
+To make it live:
+
+1. Paste `supabase-setup.sql` into the Supabase SQL Editor and run it.
+2. Put the project's **publishable** key (`sb_publishable_…`) into `supabaseKey` in
+   `rego-config.js`. Never the secret or service_role key — this file is public.
+3. Bump `VERSION` in `sw.js` and deploy.
+
+Put `screen.html` on the stand's monitor. It shows the live top ten and a QR code pointing at
+the game, so players scan it and start on their own phone.
+
+`rego-config.js` also sets the event code, the name shown on the screens, the prize wording and
+the privacy link. A link ending `?event=another-code` runs a separate leaderboard without
+editing the file, which is useful for a second stand or a practice round.
+
+The database is closed: the table has Row Level Security on with no policy and no grants, so
+the publishable key can only reach two `security definer` functions that validate everything
+they are given. Scores are checked for plausibility, a phone proves ownership of its entry with
+a key it generated, and neither function ever returns a contact detail.
+
+**Reading the leads.** There is no admin page on purpose. Names, contact details and opt-ins are
+read, exported and deleted from the Supabase table editor, so the only way to reach them is to
+log in to Supabase. `supabase-setup.sql` ends with the queries for a CSV export and for removing
+someone who asks.
 
 ## Put it online
 Drag this folder onto **app.netlify.com/drop**. GitHub Pages, Cloudflare Pages and Vercel work the

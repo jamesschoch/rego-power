@@ -418,6 +418,40 @@
     color:#8AA0A8 !important;padding:7px 16px !important;font-size:13px !important;
     border-radius:9px !important;letter-spacing:1.5px;font-family:var(--mono)}
 
+  input,textarea{user-select:text;-webkit-user-select:text}
+  .ghost.wide.quiet{border-color:var(--line) !important;color:#9FB3BB !important}
+  .lbform{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+  .lbform .fl{font-family:var(--mono);font-size:9.5px;letter-spacing:1.8px;color:#8AA0A8;text-align:center}
+  .lbin{width:100%;background:#0A1318;border:1px solid #2B4048;border-radius:10px;color:#fff;
+    font-family:var(--sans);font-size:17px;padding:12px;outline:none}
+  .lbin::placeholder{color:#63757D}
+  .lbin:focus{border-color:var(--green-br);box-shadow:0 0 0 3px rgba(0,235,145,.16)}
+  .lbin.big{font-family:var(--mono);font-size:24px;letter-spacing:4px;text-align:center;
+    text-transform:uppercase}
+  .lbchk{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.38;
+    color:#E4EDF1;cursor:pointer;margin-top:2px}
+  .lbchk input{width:22px;height:22px;flex:0 0 auto;margin:0;accent-color:var(--green)}
+  .lbsmall{font-size:11.5px;line-height:1.45;color:#8AA0A8}
+  .lbsmall a{color:var(--green-br)}
+  .lberr{font-family:var(--mono);font-size:11px;color:#FF8A6B;min-height:14px;text-align:center}
+  .lbhead{font-size:27px;font-weight:900;line-height:1.05;letter-spacing:.5px}
+  .lbhead em{font-style:normal;color:var(--green-br);text-shadow:0 0 18px rgba(0,235,145,.4)}
+  .lbsub{font-family:var(--mono);font-size:11px;letter-spacing:1.4px;color:#B8C7CD;line-height:1.55}
+  .lbsub b{color:var(--gold);font-weight:500}
+  .lbtable{width:100%;background:#0B151A;border:1px solid var(--line);border-radius:11px;padding:5px}
+  .lbrow{display:grid;grid-template-columns:46px 1fr auto;gap:8px;align-items:center;
+    padding:5.5px 8px;border-radius:7px;font-family:var(--mono);font-size:13px;letter-spacing:1px;
+    color:#4E5F67}
+  .lbrow.has{color:#E4EDF1}
+  .lbrow.me{background:rgba(0,184,114,.2);color:#fff;box-shadow:inset 0 0 0 1px rgba(0,235,145,.5)}
+  .lbrow.gap{padding:0 8px;color:#4E5F67}
+  .lbrow span{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lbrow span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .lbnote{width:100%;border-left:3px solid var(--green);padding:2px 0 2px 10px;text-align:left;
+    font-size:12px;line-height:1.42;color:#B8C7CD}
+  .lbnote b{color:var(--gold)}
+  .demobadge{position:fixed;left:0;bottom:0;z-index:80;background:var(--gold);color:#111;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;padding:4px 8px;font-weight:500}
 </style>
 </head>
 <body>
@@ -493,6 +527,7 @@ function brandFallback(img){
   </div>
 </div>
 
+<script src="rego-config.js"></script>
 <script>
 /* ========== constants ========== */
 const COLS=24, ROWS=16, DAWN=6, DUSK=19, GUT=4.4;
@@ -2235,14 +2270,17 @@ function endDay(){
     <div class="awards">${won.map(a=>`<div class="aw"><em>${a.ic}</em><b>${a.name}</b></div>`).join('')}</div>
     <div class="modes"><button id="bVault" class="play mode">\u{1F5C3} VAULT</button>
       <button id="ovBtn" class="play mode go">▶</button></div>
+    ${tut&&tut.on?'':`<button id="lbFin" class="ghost wide quiet">🏆 FINISH &amp; SUBMIT SCORE</button>`}
     <div class="sig"><span class="sigarrow"></span>PATtech</div>`);
   const wire=()=>{
     document.getElementById('bVault').onclick=()=>vaultCard(()=>{ show(); wire(); });
     document.getElementById('ovBtn').onclick=()=>{
       document.getElementById('ov').classList.add('hide'); newDay(day+1); };
+    const fin=document.getElementById('lbFin'); if(fin) fin.onclick=finishRun;
   };
   if(perfect) runFinale(()=>{ show(); wire(); });
   else { show(); wire(); }
+  if(LB.me) lbPost(lbRun(),null,false);          // mid-run: keep the board current
 }
 /* the evening premium, stated in money as well as points */
 function goldenLine(){
@@ -2263,19 +2301,21 @@ function unlockLine(list){
     return `<div class="unlockrow"><em>${u.ic}</em><div><b>${u.name}</b><i>${u.desc}</i></div></div>`;
   }).join('');
 }
-function gameOver(){
-  running=false; S.lose(); saveBest();
-  card(`<div class="dayn">✕</div><h2>${score}</h2>
-    <div class="ledger"><div class="ledgerhead"><span>🎫 REGO</span><span>${regoTotal}</span></div></div>
-    ${best?`<div class="best">★ ${best}</div>`:''}
-    ${mixBar()}
-    <div class="mixkey"><span>🌗 ${day}</span><span>🗑 ${spilled}</span><span>${shelf.join(' ')}</span></div>
-    <button id="ovBtn">↺</button>
-    <div class="sig"><span class="sigarrow"></span>PATtech</div>`);
-  document.getElementById('ovBtn').onclick=()=>{
-    document.getElementById('ov').classList.add('hide');
-    score=0;spilled=0;streak=0;chain=0;used={};lake=78;batt=0;shelf=[];regoTotal=0;
-    goldFx=[];finale=null;renderShelf();newDay(1); };
+function gameOver(finished){
+  running=false; if(finished===true) S.award(); else S.lose(); saveBest();
+  const run=lbRun(); LB.run=run; LB.form=true;
+  LB.posting=LB.me?lbPost(run,null,true):null;   // already registered: post straight away
+  lbOverCard(run,finished===true);
+}
+/* the two ways out of the leaderboard flow, both back to a fresh day 1 */
+function restartRun(){
+  LB.form=false; document.getElementById('ov').classList.add('hide');
+  score=0;spilled=0;streak=0;chain=0;used={};lake=78;batt=0;shelf=[];regoTotal=0;
+  goldFx=[];finale=null;renderShelf();newDay(1);
+}
+function finishRun(){                            // "finish & submit" from the end-of-day card
+  board=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  gameOver(true);
 }
 function renderShelf(){
   document.getElementById('shelf').innerHTML=shelf.map(i=>`<span>${i}</span>`).join('');
@@ -2496,10 +2536,12 @@ function intro(){
       <button id="bEasy" class="play mode">EASY</button>
       <button id="ovBtn" class="play mode go">▶ PLAY</button>
     </div>
+    <button id="bBoard" class="ghost wide quiet">🏆 ${esc(LB.title)} HIGH SCORES${LB.me?' · '+esc(LB.me.name):''}</button>
     ${record}${nextbar}${(streakDays||daysPowered)?streakBlock():''}${trophies}
     <button id="bHelp" class="ghost wide${seenTut?'':' nudge'}">? &nbsp;HOW TO PLAY</button>
     ${lifetimeRego?`<button id="bVaultI" class="ghost wide">\u{1F5C3} &nbsp;REGO VAULT</button>`:''}`);
   document.getElementById('bHelp').onclick=()=>{ demoOn=false; howtoCard(); };
+  document.getElementById('bBoard').onclick=()=>{ demoOn=false; LB.run=null; lbShowScores(lbBoard(),'intro'); };
   const vb=document.getElementById('bVaultI');
   if(vb) vb.onclick=()=>{ demoOn=false; vaultCard(intro); };
   runDemo();
@@ -2962,7 +3004,283 @@ function holdable(el,fn){
   ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>el.addEventListener(ev,stop));
 }
 
+/* ========== event leaderboard + lead capture ==========
+   Settings come from rego-config.js (window.REGO_CONFIG).
+   With no Supabase details the game runs in DEMO MODE: the screens are the same,
+   but scores stay on this device and contact details are not kept or sent.
+   Flow: game over -> name -> contact + opt-in -> ranked high scores -> play again.
+   A phone that has submitted once posts every later score automatically. */
+const CFG=Object.assign({supabaseUrl:'',supabaseKey:'',event:'meug-2026',eventName:'MEUG',
+  prize:'',privacyUrl:'',allowSkip:true,askNameCompany:true},window.REGO_CONFIG||{});
+const LB={live:false,event:'meug-2026',title:'MEUG',me:null,posting:null,form:false,poll:null,run:null};
+(function(){
+  const clean=v=>{ v=String(v||'').trim().toLowerCase(); return /^[a-z0-9][a-z0-9-]{0,31}$/.test(v)?v:''; };
+  let q=''; try{ q=clean(new URLSearchParams(location.search).get('event')); }catch(e){}
+  const base=clean(CFG.event)||'meug-2026';
+  LB.event=q||base;
+  LB.title=(q&&q!==base)?q.toUpperCase():String(CFG.eventName||base).toUpperCase().slice(0,24);
+  LB.url=String(CFG.supabaseUrl||'').trim().replace(/\/+$/,'');
+  LB.key=String(CFG.supabaseKey||'').trim();
+  LB.live=/^https:\/\/\S+$/.test(LB.url)&&LB.key.length>20;
+})();
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function lbLoad(){
+  try{ const v=JSON.parse(localStorage.getItem('regopower:lead:'+LB.event)||'null');
+    if(v&&v.id&&v.key&&v.name) LB.me=v; }catch(e){}
+}
+function lbSave(){ try{ localStorage.setItem('regopower:lead:'+LB.event,JSON.stringify(LB.me)); }catch(e){} }
+function lbRand(n){ const a=new Uint8Array(n); crypto.getRandomValues(a);
+  return [...a].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function lbUuid(){
+  try{ if(crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+  const h=lbRand(16);
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-4'+h.slice(13,16)+'-a'+h.slice(17,20)+'-'+h.slice(20,32);
+}
+/* Supabase Data API: POST /rest/v1/rpc/<function>, key on the apikey header only */
+async function lbRpc(fn,args){
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),10000);
+  try{
+    const r=await fetch(LB.url+'/rest/v1/rpc/'+fn,{method:'POST',
+      headers:{'Content-Type':'application/json','apikey':LB.key},
+      body:JSON.stringify(args),signal:ctl.signal});
+    let j=null; try{ j=await r.json(); }catch(e){}
+    if(!r.ok) throw new Error((j&&(j.message||j.error))||('http_'+r.status));
+    return j;
+  } finally { clearTimeout(to); }
+}
+function lbRun(){
+  return {score:Math.max(0,Math.min(9999999,Math.round(score))),
+          regos:Math.max(0,Math.min(24*day,regoTotal)), day:Math.max(1,Math.min(999,day)),
+          mode:MODE===MODES.easy?'easy':'normal'};
+}
+/* demo mode: a leaderboard that lives in this browser only */
+function lbLocal(run){
+  const k='regopower:demoboard:'+LB.event; let b=[];
+  try{ b=JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){}
+  let improved=false;
+  if(LB.me){
+    let row=b.find(x=>x.id===LB.me.id);
+    if(!row){ row={id:LB.me.id,name:LB.me.name,score:-1,regos:0,day:0,at:0}; b.push(row); }
+    row.name=LB.me.name;
+    if(run&&run.score>row.score){ row.score=run.score; row.regos=run.regos; row.day=run.day;
+      row.at=Date.now(); improved=true; }
+    try{ localStorage.setItem(k,JSON.stringify(b)); }catch(e){}
+  }
+  const s=b.filter(x=>x.score>=0).sort((x,y)=>y.score-x.score||x.at-y.at);
+  const i=LB.me?s.findIndex(x=>x.id===LB.me.id):-1;
+  return {total:s.length, improved,
+    top:s.slice(0,10).map((x,n)=>({rank:n+1,name:x.name,score:x.score,regos:x.regos,day:x.day,me:n===i})),
+    me:i<0?null:{rank:i+1,name:s[i].name,score:s[i].score,in_draw:!!LB.me.inDraw}};
+}
+/* post a score and/or details. Final posts are stashed first, so a score that
+   could not be sent goes out with the next one. Resolves to {error} on failure. */
+async function lbPost(run,det,final){
+  const me=LB.me, pd=me.pend||{};
+  if(pd.run&&(!run||pd.run.score>run.score)){ run=pd.run; final=true; }
+  det=det||pd.det||null;
+  if(final!==false){ me.pend={run,det}; lbSave(); }
+  try{
+    let res;
+    if(!LB.live){
+      if(det&&det.contact) me.inDraw=true;
+      res=lbLocal(run);
+    } else {
+      const a={p_event:LB.event,p_id:me.id,p_key:me.key,p_name:me.name};
+      if(run){ a.p_score=run.score; a.p_regos=run.regos; a.p_day=run.day; a.p_mode=run.mode;
+               a.p_final=final!==false; }
+      if(det){
+        if(det.full) a.p_full_name=det.full;
+        if(det.company) a.p_company=det.company;
+        if(det.contact){ a.p_contact=det.contact; a.p_opt_in=!!det.optIn; a.p_consent=det.consent||null; }
+      }
+      res=await lbRpc('rego_submit',a);
+      if(res&&res.me) me.inDraw=!!res.me.in_draw;
+      else if(det&&det.contact) me.inDraw=true;
+    }
+    if(final!==false){ delete me.pend; }
+    me.sent=true; lbSave();
+    return res;
+  }catch(e){
+    const m=String(e&&e.message||e);
+    if(/bad_|too_long/.test(m)&&me.pend){ me.pend.det=null; lbSave(); }   // never resend bad details
+    return {error:m};
+  }
+}
+async function lbBoard(){
+  if(!LB.live) return lbLocal(null);
+  try{ return await lbRpc('rego_board',{p_event:LB.event,p_id:LB.me?LB.me.id:null}); }
+  catch(e){ return {error:String(e&&e.message||e)}; }
+}
+function lbOverCard(run,finished){
+  const reg=!!LB.me;
+  card(`<div class="dayn">${finished?'RUN COMPLETE':'GAME OVER'}</div><h2>${run.score}</h2>
+    <div class="ledger"><div class="ledgerhead"><span>🎫 REGO</span><span>${regoTotal}</span></div></div>
+    ${best?`<div class="best">★ ${best}</div>`:''}
+    ${mixBar()}
+    <div class="mixkey"><span>🌗 ${day}</span><span>🗑 ${spilled}</span><span>${shelf.join(' ')}</span></div>
+    <button id="lbGo" class="play">${reg?'🏆 HIGH SCORES':'SUBMIT SCORE'}</button>
+    <button id="lbAgain" class="ghost wide quiet">↺ PLAY AGAIN${reg?'':' WITHOUT SUBMITTING'}</button>
+    <div class="sig"><span class="sigarrow"></span>PATtech</div>`);
+  document.getElementById('lbGo').onclick=reg?()=>lbShowScores(LB.posting,'over'):()=>lbNameCard(run);
+  document.getElementById('lbAgain').onclick=restartRun;
+}
+function lbNameCard(run){
+  card(`<div class="dayn">${run?'YOUR SCORE':esc(LB.title)+' LEADERBOARD'}</div>
+    ${run?`<h2>${run.score}</h2>`:''}
+    <div class="lbform">
+      <label class="fl" for="lbName">YOUR NAME ON THE ${esc(LB.title)} LEADERBOARD</label>
+      <input class="lbin big" id="lbName" maxlength="12" autocomplete="off" autocapitalize="characters"
+        autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="INITIALS"
+        value="${esc(LB.me?LB.me.name:'')}">
+      <div class="lberr" id="lbErr"></div>
+    </div>
+    <button id="lbNext" class="play">NEXT ▶</button>
+    <button id="lbBack" class="ghost">BACK</button>`);
+  const inp=document.getElementById('lbName');
+  const next=()=>{
+    const name=inp.value.replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().toUpperCase();
+    if(!name){ document.getElementById('lbErr').textContent='Enter initials or a name'; inp.focus(); return; }
+    lbContactCard(run,name.slice(0,12));
+  };
+  document.getElementById('lbNext').onclick=next;
+  inp.addEventListener('input',()=>{ document.getElementById('lbErr').textContent=''; });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); next(); } });
+  document.getElementById('lbBack').onclick=()=>run?lbOverCard(run,false):lbShowScores(lbBoard(),'intro');
+  setTimeout(()=>{ try{ inp.focus(); }catch(e){} },120);
+}
+function lbContactKind(v){
+  if(/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)) return 'email';
+  if(/^\+?[0-9 ()-]{7,20}$/.test(v)){ const n=v.replace(/\D/g,'').length; if(n>=7&&n<=15) return 'mobile'; }
+  return '';
+}
+function lbContactCard(run,name){
+  const prize=String(CFG.prize||'').trim();
+  const tick='Yes, PATtech can also send me occasional news about hourly renewable electricity. I can unsubscribe at any time.';
+  const small=prize
+    ? 'We use your details to contact you if you win, and only send news if you tick the box.'
+    : 'We use your details to follow up with you about this game, and only send news if you tick the box.';
+  const priv=/^https?:\/\//.test(CFG.privacyUrl||'')
+    ? ` <a href="${esc(CFG.privacyUrl)}" target="_blank" rel="noopener">Privacy</a>` : '';
+  card(`<div class="lbhead">${prize?'ENTER THE <em>PRIZE DRAW</em>':'STAY <em>IN TOUCH</em>'}</div>
+    <div class="lbsub">${prize?esc(prize).toUpperCase()+'<br>HOW DO WE REACH YOU IF YOU WIN?'
+                             :'WHERE CAN PATTECH REACH YOU?'}</div>
+    <div class="lbform">
+      ${CFG.askNameCompany?`
+      <input class="lbin" id="lbFull" maxlength="80" autocomplete="name" placeholder="Your name (optional)">
+      <input class="lbin" id="lbCo" maxlength="80" autocomplete="organization" placeholder="Company (optional)">`:''}
+      <input class="lbin" id="lbContact" maxlength="120" autocomplete="email" inputmode="email"
+        autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done"
+        placeholder="Email or mobile number">
+      <label class="lbchk"><input type="checkbox" id="lbOpt"><span>${tick}</span></label>
+      <div class="lbsmall">${small}${priv}</div>
+      <div class="lberr" id="lbErr"></div>
+    </div>
+    <button id="lbSend" class="play">SUBMIT</button>
+    ${CFG.allowSkip?`<button id="lbSkip" class="ghost wide quiet">SKIP · SCORE ONLY${prize?', NO PRIZE':''}</button>`:''}
+    <button id="lbBack" class="ghost">BACK</button>`);
+  const val=id=>{ const e=document.getElementById(id); return e?e.value.replace(/\s+/g,' ').trim():''; };
+  const go=det=>{
+    if(!LB.me) LB.me={id:lbUuid(),key:lbRand(24),name,inDraw:false};
+    else LB.me.name=name;
+    lbSave();
+    lbShowScores(lbPost(run,det,true),'over');
+  };
+  document.getElementById('lbSend').onclick=()=>{
+    const contact=val('lbContact');
+    if(!lbContactKind(contact)){
+      document.getElementById('lbErr').textContent='Enter an email address or a mobile number';
+      document.getElementById('lbContact').focus(); return;
+    }
+    go({full:val('lbFull'),company:val('lbCo'),contact,
+        optIn:document.getElementById('lbOpt').checked,consent:tick+' '+small});
+  };
+  const sk=document.getElementById('lbSkip'); if(sk) sk.onclick=()=>go(null);
+  document.getElementById('lbContact').addEventListener('input',()=>{ document.getElementById('lbErr').textContent=''; });
+  document.getElementById('lbBack').onclick=()=>lbNameCard(run);
+  document.getElementById('lbContact').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ e.preventDefault(); document.getElementById('lbSend').click(); } });
+}
+const LB_ERR={event_full:'This leaderboard is full.',bad_key:'This phone’s entry could not be matched.',
+  bad_contact:'That email or mobile number was not accepted.',bad_name:'That name was not accepted.',
+  too_long:'One of the details was too long.',bad_score:'That score was not accepted.'};
+async function lbShowScores(p,from){
+  LB.form=true;
+  card(`<div class="dayn">${esc(LB.title)} · HIGH SCORES</div>
+    <div class="pausedots">…</div><div class="lbsub">CHECKING THE LEADERBOARD</div>`);
+  const res=await p;
+  if(!res||res.error) return lbFailCard(res&&res.error,from);
+  lbScoresCard(res,from);
+}
+function lbFailCard(msg,from){
+  const known=Object.keys(LB_ERR).find(k=>String(msg||'').includes(k));
+  card(`<div class="dayn">${esc(LB.title)} · HIGH SCORES</div>
+    <div class="lbhead">NOT <em>SENT</em></div>
+    <div class="lbsub">${known?esc(LB_ERR[known]).toUpperCase():'COULD NOT REACH THE LEADERBOARD.'}</div>
+    <div class="lbsmall" style="text-align:center">${LB.me&&LB.me.pend
+      ?'Your score is kept on this phone and will be sent with your next game.':''}</div>
+    <button id="lbRetry" class="play">TRY AGAIN</button>
+    <button id="lbAgain" class="ghost wide quiet">${from==='intro'?'BACK':'↺ PLAY AGAIN'}</button>`);
+  document.getElementById('lbRetry').onclick=()=>
+    lbShowScores(LB.me&&LB.me.pend?lbPost(null,null,true):lbBoard(),from);
+  document.getElementById('lbAgain').onclick=from==='intro'?()=>{ LB.form=false; intro(); }:restartRun;
+}
+function lbRows(res){
+  const top=res.top||[], me=res.me, out=[];
+  const ord=n=>n+(n%100>10&&n%100<14?'TH':['TH','ST','ND','RD','TH','TH','TH','TH','TH','TH'][n%10]);
+  for(let i=0;i<10;i++){
+    const t=top[i];
+    out.push(t?`<div class="lbrow has${t.me?' me':''}"><span>${ord(t.rank)}</span><span>${esc(t.name)}</span><span>${String(t.score).padStart(6,'0')}</span></div>`
+              :`<div class="lbrow"><span>${ord(i+1)}</span><span>---</span><span>000000</span></div>`);
+  }
+  if(me&&me.rank>10) out.push(`<div class="lbrow gap"><span>⋮</span><span></span><span></span></div>
+    <div class="lbrow has me"><span>${ord(me.rank)}</span><span>${esc(me.name)}</span><span>${String(me.score).padStart(6,'0')}</span></div>`);
+  return out.join('');
+}
+function lbStatus(res){
+  const me=res.me, run=LB.run, prize=String(CFG.prize||'').trim();
+  if(!me) return LB.me?'PLAY A GAME TO GET ON THE BOARD':'PLAY, THEN SUBMIT YOUR SCORE';
+  let s=`YOU'RE <b>#${me.rank}</b> OF ${res.total}`;
+  if(res.improved) s+=' · <b>NEW BEST</b>';
+  else if(run&&run.score<me.score) s+=`<br>THIS RUN ${run.score} · YOUR BEST ${me.score}`;
+  if(LB.me&&LB.me.inDraw&&prize) s+='<br>YOU’RE IN THE DRAW.';
+  return s;
+}
+function lbScoresCard(res,from){
+  const prize=String(CFG.prize||'').trim(), canAdd=LB.me&&!LB.me.inDraw;
+  card(`<img class="brandlogo" alt="PATtech" src="PATtechLogoWhite.svg" onerror="brandFallback(this)">
+    <div class="lbhead">HIGH <em>SCORES</em></div>
+    <div class="dayn">${esc(LB.title)}</div>
+    <div class="lbsub" id="lbStatus">${lbStatus(res)}</div>
+    <div class="lbtable" id="lbTable">${lbRows(res)}</div>
+    <div class="lbnote">PATtech certifies renewable electricity for <b>every hour</b>, matched to real meter data.</div>
+    <button id="lbPlay" class="play">${from==='intro'?'BACK':'PLAY AGAIN'}</button>
+    ${canAdd?`<button id="lbAdd" class="ghost wide">${prize?'ENTER THE PRIZE DRAW':'ADD MY CONTACT DETAILS'}</button>`:''}`);
+  document.getElementById('lbPlay').onclick=from==='intro'?()=>{ LB.form=false; intro(); }:restartRun;
+  const add=document.getElementById('lbAdd');
+  if(add) add.onclick=()=>lbContactCard(null,LB.me.name);
+  clearInterval(LB.poll);
+  if(LB.live) LB.poll=setInterval(async()=>{                 // keep the table fresh while it is open
+    const tb=document.getElementById('lbTable');
+    if(!tb){ clearInterval(LB.poll); return; }
+    if(document.hidden) return;
+    const r=await lbBoard();
+    if(!r||r.error||!document.getElementById('lbTable')) return;
+    r.improved=res.improved;
+    document.getElementById('lbTable').innerHTML=lbRows(r);
+    document.getElementById('lbStatus').innerHTML=lbStatus(r);
+  },8000);
+}
+function lbBoot(){
+  lbLoad();
+  if(!LB.live){
+    const b=document.createElement('div'); b.className='demobadge';
+    b.textContent='DEMO MODE · SCORES STAY ON THIS DEVICE'; document.body.appendChild(b);
+  } else if(LB.me&&LB.me.pend){ lbPost(null,null,true); }    // send anything left from last time
+}
+
 /* ========== boot ========== */
+lbBoot();
 score=0;spilled=0;spillDay=0;streak=0;dayStreak=0;used={};day=1;level=1;lake=78;batt=0;
 regoDay=0;regoTotal=0;regos=[];
 demand=makeDemand(1);
@@ -2982,7 +3300,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   }).catch(()=>{});
   let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(reloaded) return; reloaded=true; location.reload();
+    if(reloaded||running||LB.form) return; reloaded=true; location.reload();
   });
 }
 requestAnimationFrame(loop);
