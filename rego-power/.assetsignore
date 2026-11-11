@@ -5,7 +5,7 @@
 # documentation and the one-off database setup
 README.md
 HANDOVER.md
-supabase-setup.sql
+supabase-*.sql
 
 # 3.5 MB of screenshots and the capture script
 promo/
